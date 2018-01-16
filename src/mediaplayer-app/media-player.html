@@ -1,0 +1,319 @@
+<link rel="import" href="../../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../../bower_components/polymer/lib/elements/dom-repeat.html">
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<script src="../../bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+<link href="../../bower_components/bootstrap/dist/css/bootstrap.min.css">
+<link href="../../bower_components/bootstrap/dist/css/bootstrap-theme.min.css">
+<link href="../../font-awesome-4.7.0/css/font-awesome.min.css">
+
+<dom-module id="media-player">
+  <template>
+    <style>
+      :host {
+        display: block;
+        text-align:center;
+      }
+      .song-mediatitle { border-bottom: 1px solid #fa4c29; padding-bottom: 10px; }
+      .song-img img { width:50px; } 
+      .songs-list { border-top:1px solid #fa4c29; }   
+      .play-list .row { width: 100%; display: inline-flex; }
+      .song-img { width: 10%; }
+      .song-title { width:90%; text-align: left}      
+      .single-track { border-bottom : 1px solid #dcdcdc; }  
+      .play-list { margin-bottom: 10px; }
+      .single-track:hover { background-color:#1E88E5;}
+      .song-prev, .song-play, .song-pause, .song-next, .song-mute { width :10%; background-color:#1E88E5; border-radius:15px; color:white;position: relative;
+       display: inline-block; }
+      .song-prev:hover, .song-play:hover, .song-pause:hover, .song-next:hover, .song-mute:hover {
+            cursor: pointer;
+            background-color:#fa4c29;
+       }
+      .player-controls { margin-bottom:10px;}
+      .active { background-color:#fa4c29;}
+      .select-item { background-color:#1E88E5; }
+      .progress {
+        width: 1px;
+        height: 3px;
+        background: #006B5A;
+        transition: width .1s linear;
+      }
+        .hp_slide{
+    width:100%;
+    background:white;
+    height:25px;
+}
+.hp_range{
+    width:0;
+    background:black;
+    height:25px;
+}
+    </style>      
+      <h4 class="song-mediatitle">[[mediatitle]]</h4>    
+      <div class="display-single-track">
+          <div class="single-track-title">
+          <marquee>[[singleTrackTitle]]</marquee>
+          </div>
+          <div class="single-track-img">
+              <img src=[[singleTrackImg]] />
+          </div>
+          <audio controls="controls" id="mediaplayer" src=[[singleTrackSrc]]></audio>
+          <div class="col-md-offset-4 col-md-12 player-controls">
+           <div class="col-md-2 song-prev" on-click="handlePrevSong">Prev</div>
+           <div class="col-md-2 song-play" on-click="handlePlaySong">Play</div>
+           <div class="col-md-2 song-mute" on-click="handleMutedSong">Mute</div>
+           <div class="col-md-2 song-next" on-click="handleNextSong">Next</div>
+           <div class="progress" id="progress"></div>
+              <progress max="100" value=[[progressvalue]]></progress>
+          </div>
+          <div class="hp_slide">
+            <div class="hp_range"></div>
+          </div>
+      </div>          
+      <div class="songs-list">
+          <h4 class="play-list">Play List</h4>
+           <div class="play-list">
+            <template is="dom-repeat" items=[[mediasrc]]>
+                <div class="row single-track col-md-12">
+                    <div class="col-md-1 song-img"><img src=[[item.img]]/></div>
+                    <div class="col-md-11 song-title" 
+                         data-id$=[[item.id]]
+                         data-title$=[[item.title]]
+                         data-img$=[[item.img]]
+                         data-src$=[[item.src]]
+                         on-click="handleSelectSong">
+                         <h4>[[item.title]]</h4></div>                   
+                </div>    
+            </template>         
+          </div>         
+      </div>  
+</template>
+
+  <script>
+    /**
+     * @customElement
+     * @polymer
+     */
+    class MediaPlayer extends Polymer.Element {        
+          
+      static get is() { return 'media-player'; }
+      static get properties() {
+        return {
+          prop1: {
+            type: String,
+            value: 'mediaplayer-app'
+          },
+          singleTrack : {
+            type : Array
+          },
+          playStatus : {
+            type : Boolean,
+            value : false,
+            observer : ['_changePlayStatus']   
+          },
+          mutedStatus : {
+            type : Boolean,
+            value : false,
+            observer : '_changeMuteStatus'
+          },
+          currentStatusId : {
+            type: Number,
+            value : ''
+          },
+          progressmax: {
+            type: Number,
+            value: 0
+          },
+          progressvalue: {
+            type: Number,
+            value: 0
+          }
+        };
+      }
+        
+    ready() {
+	    super.ready();      
+        
+        // console.log(this.unshift(this.mediasrc,0));
+            
+        this.singleTrackId = this.mediasrc[0].id;
+        this.singleTrackTitle = this.mediasrc[0].title;
+        this.singleTrackImg = this.mediasrc[0].img;
+        this.singleTrackSrc = this.mediasrc[0].src;
+        this.currentStatusId = this.mediasrc[0].id;
+        
+        let myProgressBar = this.shadowRoot.querySelector('#progress');
+        let myAudio = this.shadowRoot.querySelector('audio');
+        
+
+myAudio.addEventListener('timeupdate', this.onLoadProgress);
+
+
+        
+        //value = Math.floor((100 / player.duration) * player.currentTime);
+        
+  /*if(percent < 100) {
+    timer = setTimeout(function (){advance(duration, element)}, 100);
+  }*/
+
+/*
+        
+        
+        
+        this.progressmax = audio.duration;
+         
+        if (this.shadowRoot.querySelector('#mediaplayer').currentTime > 0) {
+          value = Math.floor((100 / audio.duration) * audio.currentTime);
+        }     
+        
+        console.log('current status id: '+this.currentStatusId);
+        */
+        //tableData.addEventListener('handleStatus', this.handleStatusClick.bind(this));
+        
+        this.shadowRoot.querySelector('#mediaplayer').addEventListener('ended',this.audioDurationHandler.bind(this));
+    }
+    
+    onLoadProgress () {            
+    let myProgressBar = this.shadowRoot.querySelector('#progress');
+    let myAudios = this.shadowRoot.querySelector('audio');
+            
+    var progress = parseInt(((myAudios.currentTime / myAudios.duration) * 100), 10);
+    myProgressBars.value = progress; 
+    }
+     
+    audioDurationHandler(e) {
+        this.playStatus = false;        
+    }   
+        
+    handlePlaySong() {
+           
+        /* this.shadowRoot.querySelector('#mediaplayer').play(); 
+         this.activeStatus('.song-play'); 
+         this.shadowRoot.querySelector('#mediaplayer').currentTime = 0;*/
+        
+        let audio = this.shadowRoot.querySelector('#mediaplayer');
+        let value = 0;        
+         
+        var duration = audio.duration;
+        
+        var increment, percent;
+        
+        var progress = this.shadowRoot.querySelector("#progress");                
+        increment = 10/duration;       
+        
+        console.log(audio.duration);
+        debugger;
+        
+        percent = Math.min(increment * 60 * 10, 100);        
+        this.progressvalue = percent;
+        
+        //progress.style.width = percent+'%';      
+        if(this.playStatus) {         
+             this.shadowRoot.querySelector('#mediaplayer').pause();
+             this.playStatus = false;
+        } else {
+             this.shadowRoot.querySelector('#mediaplayer').play();
+             this.playStatus = true;
+        }        
+     }
+        
+     _changePlayStatus() {
+         let playBtnStatus = (this.playStatus == true) ? 'Pause' : 'Play';
+         this.shadowRoot.querySelector('.song-play').innerHTML = playBtnStatus; 
+         this.activeStatus('.song-play'); 
+     }
+        
+        
+        
+     _changeMuteStatus() {
+         let muteStatus = (this.mutedStatus == true) ? 'Unmute' : 'Mute';
+         this.shadowRoot.querySelector('.song-mute').innerHTML = muteStatus;
+     }
+   
+     handleMutedSong() {
+         if(this.mutedStatus) {
+         this.shadowRoot.querySelector('#mediaplayer').muted = false;
+             this.mutedStatus = false;
+         } else {
+             this.shadowRoot.querySelector('#mediaplayer').muted = true;
+             this.mutedStatus = true;
+         }
+     }        
+        
+     handlePauseSong() {
+         this.shadowRoot.querySelector('#mediaplayer').pause();
+         this.activeStatus('.song-pause');         
+     }
+    
+     handlePrevSong() {         
+         if(parseInt(this.currentStatusId) ===  1) {
+             this.currentStatusId = this.mediasrc.length - 1;
+         } else {           
+             this.currentStatusId = parseInt(this.currentStatusId) - 2;
+         }        
+         this._nextPlaySong(this.mediasrc[this.currentStatusId]);
+         this.shadowRoot.querySelector('#mediaplayer');
+         this.activeStatus('.song-prev');         
+     }
+        
+     handleNextSong() {                 
+         const totalSongs = this.mediasrc.length;
+         let currentSongId = parseInt(this.currentStatusId);
+         if(currentSongId === totalSongs) {
+           this.currentStatusId = 0;
+         }
+         this._nextPlaySong(this.mediasrc[this.currentStatusId]);
+         this.shadowRoot.querySelector('#mediaplayer');
+         this.activeStatus('.song-next');         
+     }
+    
+     _nextPlaySong(data) {
+        this.singleTrackId = data.id;
+        this.singleTrackTitle = data.title;
+        this.singleTrackImg = data.img;
+        this.singleTrackSrc = data.src;
+        this.currentStatusId = data.id;
+        this.handleSelectPlaySong();
+     }        
+        
+     activeStatus(nodeClassName) { 
+         if(this.shadowRoot.querySelector('.active')) {
+           this.shadowRoot.querySelector('.active').classList.remove('active');
+         }        
+         if(!this.playStatus) {
+             if(this.shadowRoot.querySelector('.active')) {
+             this.shadowRoot.querySelector('.active').classList.remove('active');
+             }
+         } else {
+             this.shadowRoot.querySelector(nodeClassName).classList.add('active');  
+         }
+     } 
+        
+     handleSelectPlaySong(e) {         
+         this.playStatus = false;
+         this.shadowRoot.querySelector('#mediaplayer').currentTime = 0;
+         this.handlePlaySong();
+     }    
+        
+     handleSelectSong(e) {
+         
+      this.singleTrackId = e.target.dataset.id;
+      this.singleTrackTitle = e.target.dataset.title;
+      this.singleTrackImg = e.target.dataset.img;
+      this.singleTrackSrc = e.target.dataset.src;
+      this.currentStatusId = e.target.dataset.id;
+         
+      let audio = this.shadowRoot.querySelector('#mediaplayer');
+      let value = 0;       
+         
+      this.progressmax = audio.duration;
+         
+      if (this.shadowRoot.querySelector('#mediaplayer').currentTime > 0) {
+        value = Math.floor((100 / audio.duration) * audio.currentTime);
+      }        
+      console.log('current status id: '+this.currentStatusId);        
+      this.handleSelectPlaySong();    
+     }
+    }
+    window.customElements.define(MediaPlayer.is, MediaPlayer);
+  </script>
+</dom-module>

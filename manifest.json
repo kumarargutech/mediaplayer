@@ -1,0 +1,6 @@
+{
+  "name": "mediaplayer-app",
+  "short_name": "mediaplayer-app",
+  "start_url": "/",
+  "display": "standalone"
+}
