@@ -1,10 +1,5 @@
 <link rel="import" href="../../bower_components/polymer/polymer-element.html">
 <link rel="import" href="../../bower_components/polymer/lib/elements/dom-repeat.html">
-<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
-<script src="../../bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
-<link href="../../bower_components/bootstrap/dist/css/bootstrap.min.css">
-<link href="../../bower_components/bootstrap/dist/css/bootstrap-theme.min.css">
-<link href="../../font-awesome-4.7.0/css/font-awesome.min.css">
 
 <dom-module id="media-player">
   <template>
@@ -62,8 +57,6 @@
            <div class="col-md-2 song-play" on-click="handlePlaySong">Play</div>
            <div class="col-md-2 song-mute" on-click="handleMutedSong">Mute</div>
            <div class="col-md-2 song-next" on-click="handleNextSong">Next</div>
-           <div class="progress" id="progress"></div>
-              <progress max="100" value=[[progressvalue]]></progress>
           </div>
           <div class="hp_slide">
             <div class="hp_range"></div>
@@ -126,58 +119,30 @@
           progressvalue: {
             type: Number,
             value: 0
-          }
+          },
+        mediasrc: {
+            type: Array
+        }
         };
       }
         
     ready() {
 	    super.ready();      
         
-        // console.log(this.unshift(this.mediasrc,0));
-            
         this.singleTrackId = this.mediasrc[0].id;
         this.singleTrackTitle = this.mediasrc[0].title;
         this.singleTrackImg = this.mediasrc[0].img;
         this.singleTrackSrc = this.mediasrc[0].src;
         this.currentStatusId = this.mediasrc[0].id;
-        
-        let myProgressBar = this.shadowRoot.querySelector('#progress');
+                
         let myAudio = this.shadowRoot.querySelector('audio');
-        
-
-myAudio.addEventListener('timeupdate', this.onLoadProgress);
-
-
-        
-        //value = Math.floor((100 / player.duration) * player.currentTime);
-        
-  /*if(percent < 100) {
-    timer = setTimeout(function (){advance(duration, element)}, 100);
-  }*/
-
-/*
-        
-        
-        
-        this.progressmax = audio.duration;
-         
-        if (this.shadowRoot.querySelector('#mediaplayer').currentTime > 0) {
-          value = Math.floor((100 / audio.duration) * audio.currentTime);
-        }     
-        
-        console.log('current status id: '+this.currentStatusId);
-        */
-        //tableData.addEventListener('handleStatus', this.handleStatusClick.bind(this));
-        
+        myAudio.addEventListener('timeupdate', this.onLoadProgress);
         this.shadowRoot.querySelector('#mediaplayer').addEventListener('ended',this.audioDurationHandler.bind(this));
     }
     
     onLoadProgress () {            
     let myProgressBar = this.shadowRoot.querySelector('#progress');
-    let myAudios = this.shadowRoot.querySelector('audio');
-            
-    var progress = parseInt(((myAudios.currentTime / myAudios.duration) * 100), 10);
-    myProgressBars.value = progress; 
+    let myAudios = this.shadowRoot.querySelector('audio');     
     }
      
     audioDurationHandler(e) {
@@ -186,27 +151,9 @@ myAudio.addEventListener('timeupdate', this.onLoadProgress);
         
     handlePlaySong() {
            
-        /* this.shadowRoot.querySelector('#mediaplayer').play(); 
-         this.activeStatus('.song-play'); 
-         this.shadowRoot.querySelector('#mediaplayer').currentTime = 0;*/
-        
         let audio = this.shadowRoot.querySelector('#mediaplayer');
         let value = 0;        
-         
-        var duration = audio.duration;
-        
-        var increment, percent;
-        
-        var progress = this.shadowRoot.querySelector("#progress");                
-        increment = 10/duration;       
-        
-        console.log(audio.duration);
-        debugger;
-        
-        percent = Math.min(increment * 60 * 10, 100);        
-        this.progressvalue = percent;
-        
-        //progress.style.width = percent+'%';      
+             
         if(this.playStatus) {         
              this.shadowRoot.querySelector('#mediaplayer').pause();
              this.playStatus = false;
@@ -220,9 +167,7 @@ myAudio.addEventListener('timeupdate', this.onLoadProgress);
          let playBtnStatus = (this.playStatus == true) ? 'Pause' : 'Play';
          this.shadowRoot.querySelector('.song-play').innerHTML = playBtnStatus; 
          this.activeStatus('.song-play'); 
-     }
-        
-        
+     }      
         
      _changeMuteStatus() {
          let muteStatus = (this.mutedStatus == true) ? 'Unmute' : 'Mute';
@@ -303,13 +248,7 @@ myAudio.addEventListener('timeupdate', this.onLoadProgress);
       this.currentStatusId = e.target.dataset.id;
          
       let audio = this.shadowRoot.querySelector('#mediaplayer');
-      let value = 0;       
-         
-      this.progressmax = audio.duration;
-         
-      if (this.shadowRoot.querySelector('#mediaplayer').currentTime > 0) {
-        value = Math.floor((100 / audio.duration) * audio.currentTime);
-      }        
+      
       console.log('current status id: '+this.currentStatusId);        
       this.handleSelectPlaySong();    
      }
